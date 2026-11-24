@@ -1,0 +1,32 @@
+Word list data in this folder
+=============================
+
+The files in data/ (including data/raw/ and the derived data/words.*.json files)
+are licensed under the Creative Commons Attribution-ShareAlike 4.0 International
+License (CC BY-SA 4.0): https://creativecommons.org/licenses/by-sa/4.0/
+
+The application source code is licensed separately under MIT (see ../LICENSE).
+
+Attribution
+-----------
+
+New General Service List (NGSL) 1.2
+  Browne, C., Culligan, B., and Phillips, J. (2013). The New General Service List.
+  https://www.newgeneralservicelist.com/
+  Licensed under CC BY-SA 4.0.
+
+New Academic Word List (NAWL) 1.2
+  Browne, C., Culligan, B., and Phillips, J. (2013). The New Academic Word List.
+  https://www.newgeneralservicelist.com/new-academic-word-list
+  Licensed under CC BY-SA 4.0.
+
+Changes
+-------
+
+- data/raw/ngsl.csv and data/raw/nawl.csv are the official "stats" files of the
+  lists, renamed (the byte order mark of nawl.csv was removed). Content unchanged.
+- data/words.ngsl.json adds Turkish meanings, English alternatives, short English
+  definitions, example sentences with Turkish translations, part of speech and an
+  estimated CEFR level to each NGSL lemma. These additions were generated with
+  Google Gemini and may be edited by hand. They are shared under the same
+  CC BY-SA 4.0 license.

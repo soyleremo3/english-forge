@@ -104,6 +104,12 @@ Hedef kullanıcı: Emrullah. Seviyesi B1'in biraz altı. Hedefi Nisan–Mayıs 2
   - Kısa İngilizce tanım
   - İngilizce örnek cümle ve Türkçesi
   - Tahmini CEFR seviyesi
+  - `is_function_word`: "the, of, and" gibi işlev kelimesi mi? İşlev kelimeleri kart olarak gelmez, yeni kelime kuyruğuna girmez ve seviye tespitinde gösterilmez.
+- **İçerik kuralları** (zenginleştirme talimatı bunlara uyar):
+  - Türkçe anlamlar kısa: her biri 1–3 kelime. Açıklama gerekiyorsa parantez içinde (cevap kontrolü parantezi yok sayar). Tekrarlanan anlam olmaz.
+  - Fiillerin Türkçesi mastar (-mek/-mak). İngilizce fiiller "to" olmadan yazılır.
+  - İlk Türkçe anlam en yaygın anlamdır. Tanım ve örnek cümle bu ilk anlamı kullanır.
+  - Alternatifler yalnızca ilk anlamda eşdeğer ve sınavda doğru sayılabilecek kelimelerdir. Emin değilse boş bırakılır.
 - **Zenginleştirme:** Tek seferlik çalıştırılan `scripts/enrich-words.ts` betiği Gemini ile 25'erli partiler halinde Türkçe anlam, alternatif, tanım ve örnek üretir.
   - Sonucu `data/words.ngsl.json` dosyasına yazar.
   - Kaldığı yerden devam edebilir. Kota dolarsa ertesi gün sürer.
@@ -353,7 +359,7 @@ Bütün tablolarda `user_id uuid references auth.users` ve RLS açık. Yalnızca
 | Tablo | Önemli kolonlar |
 |---|---|
 | `profiles` | `user_id` (PK), `settings jsonb`: `daily_new` (8), `group_size` (8), `quiz_direction` (mixed), `required_tasks`, `min_sentences` (3), `desired_retention` (0.9), `review_cap` (150), `tts_accent`, `ai_enabled`, `journal_ai`, `ielts_target_date`, `cefr`; `freezes_available`, `created_at` |
-| `words` | `id`, `lemma`, `pos`, `tr_meanings text[]`, `en_alternatives text[]`, `en_definition`, `example_en`, `example_tr`, `source` (ngsl/nawl/book/manual), `rank`, `cefr`, `created_by` (manual ise kullanıcı) |
+| `words` | `id`, `lemma`, `pos`, `tr_meanings text[]`, `en_alternatives text[]`, `en_definition`, `example_en`, `example_tr`, `source` (ngsl/nawl/book/manual), `rank`, `cefr`, `is_function_word bool`, `created_by` (manual ise kullanıcı); `(source, lemma)` tekil |
 | `user_words` | `id`, `user_id`, `word_id`, `status` (new/learning/review/known/suspended), FSRS alanları (`due`, `stability`, `difficulty`, `elapsed_days`, `scheduled_days`, `reps`, `lapses`, `state`, `last_review`), `introduced_on date`, `custom_tr text[]`, `accepted_answers text[]`, `notes` |
 | `review_logs` | `id`, `user_id`, `user_word_id`, `kind` (learn/review/group_quiz/daily_test/typed_review), `rating`, `direction`, `answer`, `result` (correct/almost/wrong), `ai_checked bool`, `created_at` |
 | `study_days` | `user_id`, `study_date` (PK birlikte), `tasks jsonb` (her görevin durumu ve sayıları), `daily_test_score`, `xp`, `completed_at`, `frozen bool`, `minutes` |

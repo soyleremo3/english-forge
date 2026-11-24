@@ -17,13 +17,30 @@ npm run lint       # ESLint
 npm run typecheck  # tsc --noEmit
 npm test           # vitest run (birim testleri)
 npm run test:e2e   # Playwright (uçtan uca)
+npm run db:types   # Supabase tiplerini yeniden üret (supabase login gerekir)
+npm run db:push    # migration'ları uzak veritabanına uygula (supabase link gerekir)
+npm run enrich -- --limit 50   # NGSL'yi Gemini ile zenginleştir → data/words.ngsl.json (kaldığı yerden devam eder)
+npm run seed       # data/words.ngsl.json → words tablosu (service role, yalnızca yerel)
 ```
+
+Betikler `tsx --conditions=react-server` ile çalışır; böylece `server-only` içeren modüller (`src/lib/ai.ts`) betiklerde de kullanılabilir.
+
+## Supabase
+
+- Proje: `english-forge`, ref `nqjbtiuygrxyvlmfrklt`, bölge eu-central-1.
+- Şema yalnızca `supabase/migrations/` içindeki SQL dosyalarıyla değişir. Yeni migration dosya adı uzak veritabanındaki sürümle aynı olmalı (`supabase_migrations.schema_migrations`).
+- Tipler: `src/lib/supabase/database.types.ts` (üretilmiş, elle düzenlenmez).
+- Client'lar: `src/lib/supabase/client.ts` (tarayıcı), `server.ts` (sunucu), `proxy.ts` (oturum yenileme + giriş zorunluluğu, `src/proxy.ts` çağırır). Next.js 16'da middleware'in adı `proxy`.
+- Giriş: e-posta sihirli bağlantı → `/auth/callback`. `ALLOWED_EMAILS` kontrolü sunucuda üç yerde: giriş action'ı, callback, proxy.
+- Profil varsayılanları: `src/lib/settings.ts` (`DEFAULT_SETTINGS`).
 
 ## Klasör yapısı
 
 ```
 docs/SPEC.md              ürün ve teknik şartname (tek kaynak)
-src/app/                  rotalar (App Router), SPEC bölüm 12
+src/app/(app)/            giriş gerektiren rotalar (menülü düzen), SPEC bölüm 12
+src/app/login, auth/      giriş sayfası, callback ve çıkış
+src/proxy.ts              oturum yenileme ve giriş zorunluluğu
 src/components/           arayüz bileşenleri (nav/ = alt ve sol menü)
 src/i18n/tr.ts            BÜTÜN arayüz metinleri
 src/lib/                  iş mantığı (time.ts, ai.ts, fsrs, cevap kontrolü ...)

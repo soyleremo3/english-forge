@@ -10,7 +10,13 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "db:types": "supabase gen types typescript --project-id nqjbtiuygrxyvlmfrklt --schema public > src/lib/supabase/database.types.ts",
+    "db:push": "supabase db push",
+    "enrich": "tsx --conditions=react-server scripts/enrich-words.ts",
+    "seed": "tsx --conditions=react-server scripts/seed-words.ts",
+    "models": "tsx scripts/list-models.ts",
+    "words:report": "tsx scripts/report-words.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.125",
@@ -39,7 +45,9 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "jsdom": "^31.0.1",
+    "supabase": "^3.4.0",
     "tailwindcss": "4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.1.1"
   }
