@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Geliştirme göstergesi ("N" düğmesi) mobil alt menünün üstüne biniyordu; kapalı.
+  // Derleme ve çalışma hataları yine de gösterilir.
+  devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

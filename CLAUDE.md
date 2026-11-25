@@ -21,7 +21,11 @@ npm run db:types   # Supabase tiplerini yeniden üret (supabase login gerekir)
 npm run db:push    # migration'ları uzak veritabanına uygula (supabase link gerekir)
 npm run enrich -- --limit 50   # NGSL'yi Gemini ile zenginleştir → data/words.ngsl.json (kaldığı yerden devam eder)
 npm run seed       # data/words.ngsl.json → words tablosu (service role, yalnızca yerel)
+npm run words:report   # kalite özeti: işlev kelimeleri, alternatifler, kural uyarıları, --only komutu
+npm run models     # Gemini model listesi
 ```
+
+Kelime içerik kuralları SPEC 5.1'de. Alternatif yazım kuralının istisnaları `data/alternative-exceptions.json` dosyasında (`kind: "exclude" | "allow"`); koda gömülmez.
 
 Betikler `tsx --conditions=react-server` ile çalışır; böylece `server-only` içeren modüller (`src/lib/ai.ts`) betiklerde de kullanılabilir.
 
@@ -44,6 +48,9 @@ src/proxy.ts              oturum yenileme ve giriş zorunluluğu
 src/components/           arayüz bileşenleri (nav/ = alt ve sol menü)
 src/i18n/tr.ts            BÜTÜN arayüz metinleri
 src/lib/                  iş mantığı (time.ts, ai.ts, fsrs, cevap kontrolü ...)
+src/lib/study-days.ts     study_days okuma/yazma, Bugün durumu, görev güncelleme (server-only)
+src/lib/today/tasks.ts    görev durumları, kilit, günün tamamlanma kuralı (saf, testli)
+src/lib/streak.ts, xp.ts  seri ve XP/seviye hesapları (saf, testli)
 src/lib/prompts/          yapay zekâ sistem talimatları (Aşama 2)
 src/test/                 test kurulumu
 supabase/migrations/      SQL migration'lar
@@ -68,6 +75,11 @@ Testler test ettikleri dosyanın yanında durur: `foo.ts` → `foo.test.ts`.
 - Anahtarlar asla ekrana yazdırılmaz, loglanmaz, commit edilmez. `.env.local` içeriği okunup çıktıya basılmaz.
 - `SUPABASE_SERVICE_ROLE_KEY` ve `SUPABASE_DB_PASSWORD` yalnızca yerelde kullanılır; Vercel'e ve repoya konmaz.
 - Her commit öncesi `git status` ile kontrol edilir: `.env*` dosyalarından yalnızca `.env.example` görünebilir.
+
+## Test kullanıcısı ve geliştirici araçları
+
+- Denemeler, ekran görüntülü kontroller ve veri yazan testler **yalnızca test kullanıcısıyla** yapılır: `ALLOWED_EMAILS` içindeki `+test` adresi (`npm run test-user` oluşturur). Gerçek kullanıcının verisine dokunulmaz; gerçek veri silinecekse önce kullanıcıya liste gösterilip onay alınır.
+- Ben → "Geliştirici araçları" (yalnızca `next dev`): Bugünü sıfırla, Tarihi 1 gün ileri al, Gerçek tarihe dön. Tarih kaydırma `ef-dev-day-offset` çerezinde; uygulamanın "şimdi"si `requireUser().now` / `getNow()` (`src/lib/dev/clock.ts`) üzerinden alınır. Production'da panel çizilmez, action'lar 404 döner, çerez yok sayılır.
 
 ## Çalışma kuralları
 

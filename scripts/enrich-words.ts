@@ -21,6 +21,7 @@ import {
   ruleWarnings,
   wordsFileSchema,
 } from "@/lib/words/enriched-word";
+import { loadAlternativeRules } from "./alternative-exceptions";
 import { loadLocalEnv } from "./load-env";
 
 const ROOT = process.cwd();
@@ -93,6 +94,7 @@ async function main() {
   console.log(`Model sırası: ${models.join(" → ")}`);
 
   const all = readNgsl();
+  const altRules = loadAlternativeRules(ROOT);
   const file = readExisting();
   const done = new Set(file.words.map((w) => w.lemma));
   let todo: { lemma: string; rank: number }[];
@@ -134,7 +136,7 @@ async function main() {
           if (!a.ok) process.stdout.write(`(${a.model}: ${a.reason}) `);
         },
       });
-      const { matched, missing } = matchBatch(batch, data.words);
+      const { matched, missing } = matchBatch(batch, data.words, altRules);
       file.words.push(...matched);
       added += matched.length;
       save(file);

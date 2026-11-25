@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   type AiWord,
+  buildAlternativeRules,
+  isAcceptedAlternative,
   isFunctionWord,
   isSpellingVariant,
   matchBatch,
@@ -88,6 +90,47 @@ describe("isSpellingVariant", () => {
     expect(isSpellingVariant("affect", "effect")).toBe(false);
     expect(isSpellingVariant("color", "Color")).toBe(false);
   });
+
+  it("-s / -es eki almış biçimleri reddeder", () => {
+    expect(isSpellingVariant("schedule", "schedules")).toBe(false);
+    expect(isSpellingVariant("box", "boxes")).toBe(false);
+    expect(isSpellingVariant("schedules", "schedule")).toBe(false);
+  });
+});
+
+describe("istisna listesi", () => {
+  const rules = buildAlternativeRules([
+    { lemma: "story", alternative: "storey", kind: "exclude", reason: "kat" },
+    { lemma: "toward", alternative: "towards", kind: "allow", reason: "US/UK" },
+  ]);
+
+  it("exclude çiftini iki yönde de reddeder", () => {
+    expect(isAcceptedAlternative(rules, "story", "storey")).toBe(false);
+    expect(isAcceptedAlternative(rules, "Storey", "story")).toBe(false);
+  });
+
+  it("allow çiftini -s kuralına rağmen kabul eder", () => {
+    expect(isSpellingVariant("toward", "towards")).toBe(false);
+    expect(isAcceptedAlternative(rules, "toward", "towards")).toBe(true);
+  });
+
+  it("listede olmayanlarda yazım farkı kuralını uygular", () => {
+    expect(isAcceptedAlternative(rules, "color", "colour")).toBe(true);
+    expect(isAcceptedAlternative(rules, "schedule", "schedules")).toBe(false);
+  });
+
+  it("sanitizeWord istisnalara göre süzer", () => {
+    const story = sanitizeWord(
+      { ...word("story", { pos: "noun", en_alternatives: ["storey"] }), rank: 1 },
+      rules,
+    );
+    expect(story.en_alternatives).toEqual([]);
+    const toward = sanitizeWord(
+      { ...word("toward", { pos: "preposition", en_alternatives: ["towards"] }), rank: 2 },
+      rules,
+    );
+    expect(toward.en_alternatives).toEqual(["towards"]);
+  });
 });
 
 describe("sanitizeWord", () => {
@@ -140,6 +183,15 @@ describe("ruleWarnings", () => {
     expect(
       ruleWarnings({ lemma: "mean", pos: "verb", tr_meanings: ["anlamına gelmek", "kastetmek", "(sıfat) cimri"] }),
     ).toEqual([]);
+  });
+
+  it("-mek/-mak ile biten isim anlamlarına (yemek) uyarı vermez", () => {
+    expect(ruleWarnings({ lemma: "food", pos: "noun", tr_meanings: ["yiyecek", "yemek"] })).toEqual([]);
+    expect(ruleWarnings({ lemma: "bread", pos: "noun", tr_meanings: ["ekmek"] })).toEqual([]);
+  });
+
+  it("isim anlamı etiketsiz fiili hâlâ yakalar", () => {
+    expect(ruleWarnings({ lemma: "cook", pos: "verb", tr_meanings: ["pişirmek", "aşçı"] })).toHaveLength(1);
   });
 
   it("modal ve yardımcı fiillerde mastar ya da ek anlamına uyarı vermez", () => {

@@ -78,6 +78,61 @@ export function isFunctionWord(lemma: string, pos: Pos): boolean {
 // Alternatifler: yalnızca yazım farkları (color/colour, center/centre, gray/grey).
 // ---------------------------------------------------------------------------
 
+/** b, a'nın sonuna yalnızca -s / -es eklenmiş hali mi? */
+function isSuffixForm(a: string, b: string): boolean {
+  return b === `${a}s` || b === `${a}es`;
+}
+
+/**
+ * Kuralın yanıldığı çiftler (data/alternative-exceptions.json):
+ * - "exclude": yazım farkı gibi görünen ama farklı kelime (story/storey).
+ * - "allow": kuralın elediği ama gerçek yazım farkı olan (toward/towards).
+ */
+export const alternativeExceptionsSchema = z.array(
+  z.object({
+    lemma: z.string().min(1),
+    alternative: z.string().min(1),
+    kind: z.enum(["exclude", "allow"]),
+    reason: z.string().min(1),
+  }),
+);
+
+export type AlternativeException = z.infer<typeof alternativeExceptionsSchema>[number];
+
+export type AlternativeRules = {
+  exclude: ReadonlySet<string>;
+  allow: ReadonlySet<string>;
+};
+
+export const NO_ALTERNATIVE_RULES: AlternativeRules = { exclude: new Set(), allow: new Set() };
+
+const pairKey = (lemma: string, alternative: string) =>
+  `${lemma.trim().toLowerCase()}→${alternative.trim().toLowerCase()}`;
+
+/** İstisna listesini hızlı arama için kümelere çevirir (iki yön de kapsanır). */
+export function buildAlternativeRules(list: readonly AlternativeException[]): AlternativeRules {
+  const exclude = new Set<string>();
+  const allow = new Set<string>();
+  for (const e of list) {
+    const target = e.kind === "allow" ? allow : exclude;
+    target.add(pairKey(e.lemma, e.alternative));
+    target.add(pairKey(e.alternative, e.lemma));
+  }
+  return { exclude, allow };
+}
+
+/** Alternatif sınavda kabul edilir mi? Önce istisnalar, sonra yazım farkı kuralı. */
+export function isAcceptedAlternative(
+  rules: AlternativeRules,
+  lemma: string,
+  alternative: string,
+): boolean {
+  const key = pairKey(lemma, alternative);
+  if (rules.allow.has(key)) return true;
+  if (rules.exclude.has(key)) return false;
+  return isSpellingVariant(lemma, alternative);
+}
+
 /**
  * Aynı kelimenin farklı yazımı mı? Eş anlamlı kelimeleri eler.
  * Kural: tek kelime, ilk iki harf aynı ve Damerau-Levenshtein mesafesi
@@ -88,6 +143,8 @@ export function isSpellingVariant(lemma: string, alternative: string): boolean {
   const b = alternative.trim().toLowerCase();
   if (a === b || a.length === 0 || b.length === 0) return false;
   if (/\s/.test(a) !== /\s/.test(b)) return false;
+  // Çoğul ya da 3. tekil ek (schedule/schedules, box/boxes) yazım farkı değildir.
+  if (isSuffixForm(a, b) || isSuffixForm(b, a)) return false;
   if (a.slice(0, 2) !== b.slice(0, 2)) return false;
   const maxDistance = Math.min(a.length, b.length) >= 5 ? 2 : 1;
   return damerauLevenshtein(a, b) <= maxDistance;
@@ -152,7 +209,12 @@ export function ruleWarnings(word: Pick<EnrichedWord, "lemma" | "pos" | "tr_mean
       out.push(`(fiil) etiketli ama mastar değil: "${meaning}"`);
     } else if (tag === null && word.pos === "verb" && !isInfinitive(text)) {
       out.push(`fiilin anlamı mastar değil ya da tür etiketi eksik: "${meaning}"`);
-    } else if (tag === null && !VERB_LIKE_POS.has(word.pos) && isInfinitive(text)) {
+    } else if (
+      tag === null &&
+      word.pos !== "noun" && // "yemek", "ekmek" gibi -mek/-mak ile biten isimler fiil değildir
+      !VERB_LIKE_POS.has(word.pos) &&
+      isInfinitive(text)
+    ) {
       out.push(`fiil gibi görünen anlamda (fiil) etiketi eksik: "${meaning}"`);
     }
   }
@@ -170,7 +232,10 @@ const trKey = (s: string) => stripParens(splitPosTag(s).text).toLocaleLowerCase(
  * - Türkçe anlamlarda kopyaları siler (etiket, parantez, büyük/küçük harf fark etmez), sırayı korur.
  * - Alternatiflerde yalnızca yazım farklarını bırakır; "to"yu, lemmayı ve kopyaları atar.
  */
-export function sanitizeWord(word: AiWord & { rank: number }): EnrichedWord {
+export function sanitizeWord(
+  word: AiWord & { rank: number },
+  rules: AlternativeRules = NO_ALTERNATIVE_RULES,
+): EnrichedWord {
   const seenTr = new Set<string>();
   const tr_meanings = word.tr_meanings
     .map((m) => m.replace(/\s+/g, " ").trim())
@@ -186,7 +251,7 @@ export function sanitizeWord(word: AiWord & { rank: number }): EnrichedWord {
     .map((a) => a.replace(/^to\s+/i, "").replace(/\s+/g, " ").trim())
     .filter((a) => {
       const key = a.toLowerCase();
-      if (seenEn.has(key) || !isSpellingVariant(word.lemma, a)) return false;
+      if (seenEn.has(key) || !isAcceptedAlternative(rules, word.lemma, a)) return false;
       seenEn.add(key);
       return true;
     });
@@ -203,6 +268,7 @@ export function sanitizeWord(word: AiWord & { rank: number }): EnrichedWord {
 export function matchBatch(
   batch: ReadonlyArray<{ lemma: string; rank: number }>,
   output: ReadonlyArray<AiWord>,
+  rules: AlternativeRules = NO_ALTERNATIVE_RULES,
 ): { matched: EnrichedWord[]; missing: string[] } {
   const byLemma = new Map<string, AiWord>();
   for (const w of output) {
@@ -213,7 +279,7 @@ export function matchBatch(
   const missing: string[] = [];
   for (const { lemma, rank } of batch) {
     const hit = byLemma.get(lemma.toLowerCase());
-    if (hit) matched.push(sanitizeWord({ ...hit, lemma, rank }));
+    if (hit) matched.push(sanitizeWord({ ...hit, lemma, rank }, rules));
     else missing.push(lemma);
   }
   return { matched, missing };

@@ -1,0 +1,14 @@
+[
+  {
+    "lemma": "story",
+    "alternative": "storey",
+    "kind": "exclude",
+    "reason": "storey = bina katı; farklı kelime, yazım farkı değil"
+  },
+  {
+    "lemma": "toward",
+    "alternative": "towards",
+    "kind": "allow",
+    "reason": "Amerikan (toward) / İngiliz (towards) yazımı; -s eki kuralına takılıyor ama aynı kelime"
+  }
+]
