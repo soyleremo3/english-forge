@@ -1,11 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { requestOrigin } from "@/lib/request-origin";
 import { completeSignIn } from "@/lib/auth/complete-sign-in";
 import { createClient } from "@/lib/supabase/server";
 
 // PKCE akışı (?code=...). Varsayılan Supabase e-posta şablonu buraya döner.
 // Yalnızca giriş bağlantısının istendiği tarayıcıda çalışır (doğrulama çerezi orada).
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl;
+  const { searchParams } = request.nextUrl;
+  // Bağlantı hangi adreste açıldıysa (localhost ya da telefondan yerel IP) oraya dön.
+  const origin = requestOrigin(request.headers, request.nextUrl.origin);
   const code = searchParams.get("code");
   const fail = (error: string) => NextResponse.redirect(`${origin}/login?error=${error}`);
 

@@ -12,6 +12,7 @@ Next.js (App Router) · TypeScript strict · Tailwind CSS v4 · Supabase (`@supa
 
 ```bash
 npm run dev        # geliştirme sunucusu (http://localhost:3000)
+npm run dev:lan    # aynı ağdaki telefondan erişim için (http://<bilgisayar IP>:3000)
 npm run build      # üretim derlemesi
 npm run lint       # ESLint
 npm run typecheck  # tsc --noEmit
@@ -51,6 +52,12 @@ src/lib/                  iş mantığı (time.ts, ai.ts, fsrs, cevap kontrolü 
 src/lib/study-days.ts     study_days okuma/yazma, Bugün durumu, görev güncelleme (server-only)
 src/lib/today/tasks.ts    görev durumları, kilit, günün tamamlanma kuralı (saf, testli)
 src/lib/streak.ts, xp.ts  seri ve XP/seviye hesapları (saf, testli)
+src/lib/answer-check.ts   cevap kontrolü (SPEC 5.6, saf, testli)
+src/lib/fsrs.ts           ts-fsrs sarmalayıcısı; ilk tekrar her zaman ertesi gün (testli)
+src/lib/study/            grup çalışması durum makinesi, günün planı, sınav mantığı (saf, testli)
+src/lib/new-words.ts      günün planı, "zaten biliyorum", grup sınavı kaydı (server-only)
+src/stores/               Zustand + persist (localStorage) çalışma oturumları
+src/components/study, quiz  kart, grup çalışması, sınav ekranları
 src/lib/prompts/          yapay zekâ sistem talimatları (Aşama 2)
 src/test/                 test kurulumu
 supabase/migrations/      SQL migration'lar
@@ -84,6 +91,8 @@ Testler test ettikleri dosyanın yanında durur: `foo.ts` → `foo.test.ts`.
 ## Çalışma kuralları
 
 - İş bitti demeden önce `npm run lint`, `npm run typecheck` ve `npm test` çalıştırılır; hepsi geçmeli.
+- Her görevin sonunda değişiklikler **sormadan commit edilip push edilir** (kullanıcının kalıcı isteği). Öncesinde `git status` ile `.env*` (yalnızca `.env.example` hariç) ve gizli anahtar olmadığı kontrol edilir. Kullanıcının dışarıda tutulmasını istediği dosyalar (ör. enrich çalışırken `data/words.ngsl.json`) eklenmez. Raporda commit hash'i yazılır.
+- Yönlendirmelerde `request.nextUrl.origin` yerine `requestOrigin()` (`src/lib/request-origin.ts`) kullanılır: `dev:lan` ile `0.0.0.0` üzerinde çalışırken doğru adrese dönülür.
 - SPEC'te olmayan bir karar gerekirse önce kullanıcıya sorulur, tahminle ilerlenmez.
 
 ## Rapor formatı

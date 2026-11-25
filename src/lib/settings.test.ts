@@ -44,6 +44,7 @@ describe("parseSettingsForm", () => {
     const values: Record<string, string | string[] | null> = {
       daily_new: "12",
       group_size: "8",
+      shuffle_rounds: null,
       quiz_direction: "tr_en",
       required_tasks: ["review", "new_words"],
       min_sentences: "4",
@@ -71,6 +72,7 @@ describe("parseSettingsForm", () => {
       settings: {
         daily_new: 12,
         group_size: 8,
+        shuffle_rounds: false,
         quiz_direction: "tr_en",
         required_tasks: ["review", "new_words"],
         min_sentences: 4,

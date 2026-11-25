@@ -63,6 +63,37 @@ export function addDays(date: IsoDate, days: number): IsoDate {
   return fromUtcMs(toUtcMs(date) + days * DAY_MS);
 }
 
+/** Saat dilimindeki yerel saat ile UTC arasındaki fark (dakika): yerel = UTC + fark. */
+function zoneOffsetMinutes(instantMs: number, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(new Date(instantMs));
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return Math.round((asUtc - instantMs) / 60_000);
+}
+
+/** Bir çalışma gününün başladığı an: o günün yerel DAY_START_HOUR'u (ör. 2026-11-26 04:00 İstanbul). */
+export function startOfStudyDay(date: IsoDate, config: TimeConfig = getTimeConfig()): Date {
+  const guess = toUtcMs(date) + config.dayStartHour * HOUR_MS;
+  // Yerel saati UTC'ye çevir; yaz saati geçişine karşı farkı bir kez daha kontrol et.
+  let instant = guess - zoneOffsetMinutes(guess, config.timeZone) * 60_000;
+  instant = guess - zoneOffsetMinutes(instant, config.timeZone) * 60_000;
+  return new Date(instant);
+}
+
+/** Çalışma gününün bittiği an (ertesi çalışma gününün başlangıcı). */
+export function endOfStudyDay(date: IsoDate, config: TimeConfig = getTimeConfig()): Date {
+  return startOfStudyDay(addDays(date, 1), config);
+}
+
 /** 1 = Pazartesi … 7 = Pazar (ISO). */
 export function isoWeekday(date: IsoDate): number {
   const d = new Date(toUtcMs(date)).getUTCDay();

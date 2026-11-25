@@ -125,6 +125,9 @@ Hedef kullanıcı: Emrullah. Seviyesi B1'in biraz altı. Hedefi Nisan–Mayıs 2
 
 ### 5.3 Grup çalışması (kullanıcının tarif ettiği akış)
 - Günün yeni kelimeleri kuyruktaki sıradaki N kelimedir. 8'lik gruplara bölünür, son grup daha küçük olabilir.
+- Günün kelimeleri ve grupları gün ilk açıldığında belirlenir ve gün içinde değişmez (`study_days.tasks.new_words.plan`). Yalnızca "Bunu zaten biliyorum" denen kelimenin yerine kuyruktaki sıradaki kelime aynı gruba girer.
+- Bir gün bitirilmeyen kelimeler (`status='new'`) ertesi gün önce gelir ve o günün N kelimesinin içinde sayılır.
+- İşlev kelimeleri ve Türkçe anlamı boş kelimeler kuyruğa girmez.
 - **Kart:**
   - Ön yüz: Türkçe anlam ve kelime türü.
   - Dokununca ya da Space tuşuyla döner.
@@ -135,7 +138,7 @@ Hedef kullanıcı: Emrullah. Seviyesi B1'in biraz altı. Hedefi Nisan–Mayıs 2
   - Son kelimeden sonra başa dönülür (döngü).
   - "Bildim" denen kelime aktif listeden çıkar, sonraki turda gelmez.
   - "Bilemedim" denen kelime listede kalır.
-  - Her yeni turda sıra karıştırılır, böylece sıra ezberlenmez. Ayarlardan kapatılabilir.
+  - Her yeni turda sıra karıştırılır, böylece sıra ezberlenmez. Ayarlardan kapatılabilir (`shuffle_rounds`).
   - Kullanıcı istediği an okla ileri ya da geri gidebilir. Döngü sonsuzdur.
 - **Aktif kelime kalmayınca** "Bu grubu bir daha çalışmak ister misin?" sorusu çıkar:
   - **Evet:** Gruptaki 8 kelimenin hepsi yeniden aktif olur, yeni tur başlar.
@@ -145,7 +148,9 @@ Hedef kullanıcı: Emrullah. Seviyesi B1'in biraz altı. Hedefi Nisan–Mayıs 2
   - Yön ayarı: Varsayılan **Karışık** (yarısı Türkçe → İngilizce yazılır, yarısı İngilizce → Türkçe). Ayarlardan yalnızca TR→EN ya da yalnızca EN→TR seçilebilir.
   - Cevaplar bölüm 5.6'ya göre kontrol edilir. Her cevaptan hemen sonra geri bildirim gösterilir (doğru / neredeyse / yanlış, yanlışsa doğrusu). Enter ile sonraki soruya geçilir.
   - Sonuç ekranında puan ve yanlışlar listesi olur. İsteğe bağlı "Yanlışları tekrar çalış" seçeneği yalnızca yanlış kelimelerle kısa bir kart döngüsü ve mini sınav açar.
-  - Sınav bitince grubun her kelimesi FSRS kartına dönüşür. İlk sınavda doğru bilinen kelime `Good`, yanlış bilinen `Again` olarak işlenir, yani yarın tekrar karşına çıkar.
+  - Sınav bitince grubun her kelimesi FSRS kartına dönüşür. İlk sınavda doğru bilinen kelime `Good`, yanlış bilinen `Again` olarak işlenir.
+  - Yeni kartın **ilk tekrarı her zaman ertesi çalışma günüdür** (Good ya da Again fark etmez). İkinci tekrardan itibaren FSRS'in hesapladığı aralık geçerlidir. FSRS kısa süreli öğrenme adımları kapalıdır (`enable_short_term: false`).
+  - Sonuç ekranında, kaydetmeden önce yanlış cevaplara itiraz edilebilir; sonuç "Kaydet" ile yazılır.
   - Sonra bir sonraki grup açılır.
 - Oturum durumu Zustand ve localStorage'da tutulur. Sayfa yenilense ya da telefon kapansa kaldığın yerden devam edersin.
 
@@ -163,6 +168,7 @@ Hedef kullanıcı: Emrullah. Seviyesi B1'in biraz altı. Hedefi Nisan–Mayıs 2
 - Kart Türkçe yüzle başlar, çevrilince İngilizcesi görünür. Butonlar: **Bilemedim** = `Again`, **Bildim** = `Good`. Ayarlardan dörtlü düzene (Again / Hard / Good / Easy) geçilebilir.
 - Her 5 tekrar kartından biri yazılı sorulur, böylece aktif hatırlama yapılır. Ayarlardan değiştirilebilir.
 - Hedef hatırlama oranı (desired retention) 0,90. Ayarlardan değiştirilebilir.
+- "Bugünün tekrarları": vadesi bu çalışma günü bitmeden (ertesi gün 04:00'ten önce) gelen kartlar.
 - Günlük tekrar üst sınırı 150 (ayarlanabilir). Fazlası ertesi güne kayar ve uyarı gösterilir.
 
 ### 5.6 Cevap kontrol kuralları
@@ -175,6 +181,8 @@ Hedef kullanıcı: Emrullah. Seviyesi B1'in biraz altı. Hedefi Nisan–Mayıs 2
 3. **Neredeyse:** 5 ve daha uzun harfli kelimelerde Damerau-Levenshtein mesafesi 1 ise doğru sayılır ama yazım uyarısı gösterilir. 4 harf ve daha kısa kelimelerde tam eşleşme gerekir.
 4. **Belirsiz:** Eşleşme yoksa ve yapay zekâ açıksa, sınav sonunda bütün belirsiz cevaplar **tek istekle** sorulur: "Bu cevap bu kelimenin geçerli bir anlamı mı?" Cevap doğru/yanlış ve kısa bir açıklamadır. Yapay zekânın kabul ettiği cevap o kelimenin kabul listesine eklenir, bir daha sorulmaz.
 5. **Yapay zekâ kapalıyken:** Eşleşmeyen cevap yanlış sayılır. Ama "Aslında doğruydu" itiraz butonu olur. İtiraz edilen cevap kabul listesine eklenir ve sonuç düzeltilir.
+6. **Kabul listeleri yöne göre ayrıdır:** TR→EN sorusunda itirazla kabul edilen İngilizce cevap `accepted_answers_en`'e, EN→TR sorusunda kabul edilen Türkçe cevap `accepted_answers_tr`'ye eklenir. Bir yönde kabul edilen cevap diğer yönde doğru sayılmaz.
+7. Aşama 1'de yapay zekâ bağlı olmadığı için "belirsiz" sonuç yanlış sayılır ve itiraz edilebilir.
 
 ### 5.7 Cümle kurma
 - Bugünün kelimelerinden en az 3 tanesiyle cümle kurulur (ayar: 3–8). Kelime seçicide sınavda yanlış yapılan kelimeler önce önerilir.
@@ -358,9 +366,9 @@ Bütün tablolarda `user_id uuid references auth.users` ve RLS açık. Yalnızca
 
 | Tablo | Önemli kolonlar |
 |---|---|
-| `profiles` | `user_id` (PK), `settings jsonb`: `daily_new` (8), `group_size` (8), `quiz_direction` (mixed), `required_tasks`, `min_sentences` (3), `desired_retention` (0.9), `review_cap` (150), `tts_accent`, `ai_enabled`, `journal_ai`, `ielts_target_date`, `cefr`; `freezes_available`, `created_at` |
+| `profiles` | `user_id` (PK), `settings jsonb`: `daily_new` (8), `group_size` (8), `shuffle_rounds` (true), `quiz_direction` (mixed), `required_tasks`, `min_sentences` (3), `desired_retention` (0.9), `review_cap` (150), `tts_accent`, `ai_enabled`, `journal_ai`, `ielts_target_date`, `cefr`; `freezes_available`, `created_at` |
 | `words` | `id`, `lemma`, `pos`, `tr_meanings text[]`, `en_alternatives text[]`, `en_definition`, `example_en`, `example_tr`, `source` (ngsl/nawl/book/manual), `rank`, `cefr`, `is_function_word bool`, `created_by` (manual ise kullanıcı); `(source, lemma)` tekil |
-| `user_words` | `id`, `user_id`, `word_id`, `status` (new/learning/review/known/suspended), FSRS alanları (`due`, `stability`, `difficulty`, `elapsed_days`, `scheduled_days`, `reps`, `lapses`, `state`, `last_review`), `introduced_on date`, `custom_tr text[]`, `accepted_answers text[]`, `notes` |
+| `user_words` | `id`, `user_id`, `word_id`, `status` (new/learning/review/known/suspended), FSRS alanları (`due`, `stability`, `difficulty`, `elapsed_days`, `scheduled_days`, `reps`, `lapses`, `state`, `last_review`), `introduced_on date`, `custom_tr text[]`, `accepted_answers_en text[]` (TR→EN itirazları), `accepted_answers_tr text[]` (EN→TR itirazları), `notes` |
 | `review_logs` | `id`, `user_id`, `user_word_id`, `kind` (learn/review/group_quiz/daily_test/typed_review), `rating`, `direction`, `answer`, `result` (correct/almost/wrong), `ai_checked bool`, `created_at` |
 | `study_days` | `user_id`, `study_date` (PK birlikte), `tasks jsonb` (her görevin durumu ve sayıları), `daily_test_score`, `xp`, `completed_at`, `frozen bool`, `minutes` |
 | `quiz_attempts` | `id`, `user_id`, `kind` (group/daily/error_review), `study_date`, `items jsonb`, `score`, `created_at` |

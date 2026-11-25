@@ -74,7 +74,7 @@ export function SettingsForm({ initial }: { initial: Settings }) {
       />,
     );
 
-  const checkbox = (key: "ai_enabled" | "journal_ai") => (
+  const checkbox = (key: "ai_enabled" | "journal_ai" | "shuffle_rounds") => (
     <div className="flex items-start gap-3">
       <input
         id={key}
@@ -114,6 +114,7 @@ export function SettingsForm({ initial }: { initial: Settings }) {
             {numberInput("daily_new")}
             {numberInput("group_size")}
           </div>
+          {checkbox("shuffle_rounds")}
           {field(
             "quiz_direction",
             <select

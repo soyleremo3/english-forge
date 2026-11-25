@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveSettings, type Settings, type TaskKey } from "@/lib/settings";
 import { computeStreak, type StreakInfo } from "@/lib/streak";
 import type { Database, Json } from "@/lib/supabase/database.types";
-import { getStudyDate, type IsoDate } from "@/lib/time";
+import { endOfStudyDay, getStudyDate, type IsoDate } from "@/lib/time";
 import {
   buildTaskViews,
   type DayProgress,
@@ -45,14 +45,18 @@ export async function saveSettings(supabase: Db, userId: string, settings: Setti
   if (error) fail("Ayarlar kaydedilemedi", error.message);
 }
 
-/** Şu an vadesi gelmiş tekrar kartı sayısı. */
+/**
+ * Bugün tekrar edilecek kart sayısı: vadesi bu çalışma günü bitmeden gelen kartlar.
+ * Böylece "yarın" vadeli bir kart, ertesi çalışma gününün tamamında (04:00'ten itibaren) görünür.
+ */
 export async function countDueReviews(supabase: Db, userId: string, now: Date): Promise<number> {
+  const dayEnd = endOfStudyDay(getStudyDate(now));
   const { count, error } = await supabase
     .from("user_words")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
     .in("status", ["learning", "review"])
-    .lte("due", now.toISOString());
+    .lt("due", dayEnd.toISOString());
   if (error) fail("Tekrar kartları sayılamadı", error.message);
   return count ?? 0;
 }

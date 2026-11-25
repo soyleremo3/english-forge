@@ -21,6 +21,7 @@ const L = SETTINGS_LIMITS;
 export const settingsSchema = z.object({
   daily_new: z.number().int().min(L.daily_new.min).max(L.daily_new.max),
   group_size: z.number().int().min(L.group_size.min).max(L.group_size.max),
+  shuffle_rounds: z.boolean(),
   quiz_direction: z.enum(QUIZ_DIRECTIONS),
   required_tasks: z.array(z.enum(taskKeys)).min(1),
   min_sentences: z.number().int().min(L.min_sentences.min).max(L.min_sentences.max),
@@ -39,6 +40,7 @@ export type SettingsKey = keyof Settings;
 export const DEFAULT_SETTINGS: Settings = {
   daily_new: 8,
   group_size: 8,
+  shuffle_rounds: true,
   quiz_direction: "mixed",
   required_tasks: [...taskKeys],
   min_sentences: 3,
@@ -69,6 +71,7 @@ export function resolveSettings(raw: unknown): Settings {
 export const settingsFormSchema = z.object({
   daily_new: z.coerce.number(),
   group_size: z.coerce.number(),
+  shuffle_rounds: z.boolean(),
   quiz_direction: z.string(),
   required_tasks: z.array(z.string()),
   min_sentences: z.coerce.number(),
@@ -90,6 +93,7 @@ export function parseSettingsForm(
   const parsed = settingsFormSchema.safeParse({
     daily_new: text("daily_new"),
     group_size: text("group_size"),
+    shuffle_rounds: formData.get("shuffle_rounds") === "on",
     quiz_direction: text("quiz_direction"),
     required_tasks: formData.getAll("required_tasks").map(String),
     min_sentences: text("min_sentences"),

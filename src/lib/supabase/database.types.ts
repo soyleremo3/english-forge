@@ -236,7 +236,8 @@ export type Database = {
       }
       user_words: {
         Row: {
-          accepted_answers: string[]
+          accepted_answers_en: string[]
+          accepted_answers_tr: string[]
           created_at: string
           custom_tr: string[] | null
           difficulty: number
@@ -257,7 +258,8 @@ export type Database = {
           word_id: number
         }
         Insert: {
-          accepted_answers?: string[]
+          accepted_answers_en?: string[]
+          accepted_answers_tr?: string[]
           created_at?: string
           custom_tr?: string[] | null
           difficulty?: number
@@ -278,7 +280,8 @@ export type Database = {
           word_id: number
         }
         Update: {
-          accepted_answers?: string[]
+          accepted_answers_en?: string[]
+          accepted_answers_tr?: string[]
           created_at?: string
           custom_tr?: string[] | null
           difficulty?: number
@@ -364,7 +367,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      next_fresh_words: {
+        Args: { p_limit: number }
+        Returns: {
+          cefr: string | null
+          created_at: string
+          created_by: string | null
+          en_alternatives: string[]
+          en_definition: string | null
+          example_en: string | null
+          example_tr: string | null
+          id: number
+          is_function_word: boolean
+          lemma: string
+          pos: string | null
+          rank: number | null
+          source: string
+          tr_meanings: string[]
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "words"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       [_ in never]: never

@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { z } from "zod";
 import { isEmailAllowed } from "@/lib/auth/allowed-emails";
+import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState =
@@ -23,7 +24,9 @@ export async function sendMagicLink(
   // İzin kontrolü sunucuda; listede olmayana Supabase'e istek bile gitmez.
   if (!isEmailAllowed(email)) return { status: "error", reason: "private" };
 
-  const origin = (await headers()).get("origin") ?? "http://localhost:3000";
+  // Giriş bağlantısı, isteğin yapıldığı adrese döner: telefondan istenirse telefondaki adrese.
+  const h = await headers();
+  const origin = h.get("origin") ?? requestOrigin(h, "http://localhost:3000");
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email,

@@ -8,8 +8,14 @@ import { isActive, navItems } from "./nav-items";
 
 // Mobilde altta sabit menü, masaüstünde (md ve üstü) solda dikey menü.
 export function AppNav() {
-  const pathname = usePathname();
+  return <AppNavView pathname={usePathname()} />;
+}
 
+/**
+ * Menünün kendisi. pathname null ise hiçbir öğe aktif görünmez: dinamik rotalarda
+ * (ör. /study/quiz/[id]) ön çizim sırasında adres bilinmediğinde Suspense yedeği olarak kullanılır.
+ */
+export function AppNavView({ pathname }: { pathname: string | null }) {
   return (
     <nav
       aria-label={tr.nav.label}
@@ -20,7 +26,7 @@ export function AppNav() {
       </p>
       <ul className="flex justify-around md:flex-col md:gap-1 md:px-3">
         {navItems.map((item) => {
-          const active = isActive(pathname, item.href);
+          const active = pathname !== null && isActive(pathname, item.href);
           return (
             <li key={item.href} className="flex-1 md:flex-none">
               <Link

@@ -14,6 +14,8 @@ const taskKeySchema = z.enum(taskKeys);
  */
 export async function completeTaskTemporary(formData: FormData): Promise<void> {
   const key = taskKeySchema.parse(formData.get("task"));
+  // Yeni kelimeler artık gerçek ekranla (grup çalışması + sınav) tamamlanır.
+  if (key === "new_words") redirect("/study/new");
   const { supabase, userId, now } = await requireUser();
   const before = await loadToday(supabase, userId, now);
 

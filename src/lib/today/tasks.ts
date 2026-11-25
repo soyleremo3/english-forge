@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { type Settings, type TaskKey, taskKeys } from "@/lib/settings";
+import { newWordsPlanSchema } from "@/lib/study/new-words-plan";
 
 // Bugün ekranının görev modeli (SPEC 4). study_days.tasks jsonb'sinin biçimi ve
 // görev durumlarının hesaplanması burada; veritabanına dokunmaz (saf fonksiyonlar).
@@ -11,9 +12,16 @@ export const taskProgressSchema = z.object({
 
 export type TaskProgress = z.infer<typeof taskProgressSchema>;
 
+/** Yeni kelimeler görevi ayrıca günün sabit kelime planını taşır (SPEC 5.3). */
+export const newWordsProgressSchema = taskProgressSchema.extend({
+  plan: newWordsPlanSchema.optional(),
+});
+
+export type NewWordsProgress = z.infer<typeof newWordsProgressSchema>;
+
 export const storedTasksSchema = z.object({
   review: taskProgressSchema.optional(),
-  new_words: taskProgressSchema.optional(),
+  new_words: newWordsProgressSchema.optional(),
   daily_test: taskProgressSchema.optional(),
   sentences: taskProgressSchema.optional(),
 });
@@ -69,7 +77,7 @@ function statusOf(done: boolean, count: number): TaskStatus {
 
 export function buildTaskViews(tasks: StoredTasks, ctx: TaskContext): TaskView[] {
   const review = tasks.review ?? { done: false, count: 0 };
-  const newWords = tasks.new_words ?? { done: false, count: 0 };
+  const newWords: NewWordsProgress = tasks.new_words ?? { done: false, count: 0 };
   const dailyTest = tasks.daily_test ?? { done: false, count: 0 };
   const sentences = tasks.sentences ?? { done: false, count: 0 };
 
@@ -96,7 +104,8 @@ export function buildTaskViews(tasks: StoredTasks, ctx: TaskContext): TaskView[]
       key: "new_words",
       status: statusOf(newWords.done, newWords.count),
       count: newWords.count,
-      total: ctx.settings.daily_new,
+      // Plan varsa günün sabit kelime sayısı, yoksa ayardaki günlük sayı.
+      total: newWords.plan ? newWords.plan.groups.flat().length : ctx.settings.daily_new,
       auto: false,
       href: TASK_HREFS.new_words,
     },

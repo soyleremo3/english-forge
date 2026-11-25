@@ -52,6 +52,14 @@ describe("buildTaskViews", () => {
   });
 });
 
+describe("yeni kelimeler sayacı", () => {
+  it("plan varsa hedef, planın kelime sayısıdır (ayar gün içinde değişse bile)", () => {
+    const tasks = { new_words: { done: false, count: 8, plan: { groups: [[1, 2, 3, 4, 5, 6, 7, 8], [9, 10]], completed: [0] } } };
+    const view = buildTaskViews(tasks, ctx(0)).find((v) => v.key === "new_words");
+    expect(view).toMatchObject({ count: 8, total: 10, status: "in_progress" });
+  });
+});
+
 describe("dayProgress", () => {
   const allDone = {
     review: { done: true, count: 10 },

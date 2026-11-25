@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   addDays,
   diffDays,
+  endOfStudyDay,
   getStudyDate,
+  startOfStudyDay,
   getTimeConfig,
   isoWeekday,
   type TimeConfig,
@@ -69,6 +71,25 @@ describe("getTimeConfig", () => {
     expect(getTimeConfig({})).toEqual(ist);
     expect(getTimeConfig({ DAY_START_HOUR: "25" }).dayStartHour).toBe(4);
     expect(getTimeConfig({ DAY_START_HOUR: "abc" }).dayStartHour).toBe(4);
+  });
+});
+
+describe("startOfStudyDay / endOfStudyDay", () => {
+  it("İstanbul'da gün 04:00'te (UTC 01:00) başlar", () => {
+    expect(startOfStudyDay("2026-11-26", ist).toISOString()).toBe("2026-11-26T01:00:00.000Z");
+    expect(endOfStudyDay("2026-11-25", ist).toISOString()).toBe("2026-11-26T01:00:00.000Z");
+  });
+
+  it("getStudyDate ile tutarlı: başlangıç anı o güne, bir saniye öncesi önceki güne ait", () => {
+    const start = startOfStudyDay("2027-01-01", ist);
+    expect(getStudyDate(start, ist)).toBe("2027-01-01");
+    expect(getStudyDate(new Date(start.getTime() - 1000), ist)).toBe("2026-12-31");
+  });
+
+  it("yaz saati olan bölgede de yerel saati korur", () => {
+    const berlin: TimeConfig = { timeZone: "Europe/Berlin", dayStartHour: 4 };
+    expect(startOfStudyDay("2026-07-01", berlin).toISOString()).toBe("2026-07-01T02:00:00.000Z");
+    expect(startOfStudyDay("2026-12-01", berlin).toISOString()).toBe("2026-12-01T03:00:00.000Z");
   });
 });
 
