@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { tr } from "@/i18n/tr";
+import { isEmailCodeLoginEnabled } from "@/lib/auth/login-options";
 import { LoginForm } from "./login-form";
 
 export default function LoginPage() {
@@ -9,7 +10,7 @@ export default function LoginPage() {
       <h1 className="mt-1 text-3xl font-semibold tracking-tight">{tr.auth.title}</h1>
       <p className="mt-2 mb-6 text-muted">{tr.auth.subtitle}</p>
       <Suspense>
-        <LoginForm />
+        <LoginForm codeEnabled={isEmailCodeLoginEnabled()} />
       </Suspense>
     </main>
   );

@@ -210,7 +210,8 @@
     // Requires enable_refresh_token_rotation = true.
     "refresh_token_reuse_interval": 10,
     // Allow/disallow new user signups to your project. Existing users can still sign in.
-    "enable_signup": true,
+    // Kayıt kapalı: hesaplar yalnızca scripts/create-users.ts ile (service role) oluşturulur.
+    "enable_signup": false,
     // Allow/disallow anonymous sign-ins to your project.
     "enable_anonymous_sign_ins": false,
     // Allow/disallow testing manual linking of accounts
@@ -274,7 +275,8 @@
       // Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
       "max_frequency": "1m0s",
       // Number of characters used in the email OTP.
-      "otp_length": 8,
+      // E-posta koduyla giriş (yedek yöntem) 6 haneli kod kullanır.
+      "otp_length": 6,
       // Number of seconds before the email OTP expires (defaults to 1 hour).
       "otp_expiry": 3600,
 
@@ -289,18 +291,9 @@
       //   "sender_name": "Admin"
       // },
 
-      // EnglishForge: token_hash akışı (/auth/confirm) için şablonlar hazır, ama ücretsiz planda
-      // şablon değiştirmek için özel SMTP gerekiyor. SMTP eklenince bu bloğu aç ve config push yap.
-      // "template": {
-      //   "magic_link": {
-      //     "subject": "EnglishForge giriş bağlantın",
-      //     "content_path": "./supabase/templates/magic_link.html"
-      //   },
-      //   "confirmation": {
-      //     "subject": "EnglishForge giriş bağlantın",
-      //     "content_path": "./supabase/templates/confirmation.html"
-      //   }
-      // },
+      // EnglishForge: e-posta koduyla giriş (yedek yöntem) için "Magic Link" şablonunda {{ .Token }}
+      // gerekir. Ücretsiz planda şablon değiştirmek kendi SMTP'ni gerektirir. SMTP kurulunca
+      // template.magic_link tanımla, config push yap ve .env.local'da EMAIL_CODE_LOGIN=true yap.
 
       // Uncomment to customize notification email template
       // "notification": {

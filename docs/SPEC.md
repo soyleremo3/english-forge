@@ -70,7 +70,10 @@ Hedef kullanıcı: Emrullah. Seviyesi B1'in biraz altı. Hedefi Nisan–Mayıs 2
 - **Kullanım şartları:** Gemini API şartlarında yaş şartı var. Anahtarın kimin hesabından alınacağına aileyle birlikte karar verilir. Uygulama yapay zekâ olmadan da kullanılabilir şekilde tasarlanır.
 
 ### Erişim güvenliği
-- Uygulama herkese açık bir adreste çalışır. Bu yüzden **yalnızca `ALLOWED_EMAILS` listesindeki e-postalar giriş yapabilir** (Supabase Auth, e-posta ile sihirli bağlantı). Başkaları API kotasını harcayamaz.
+- Uygulama herkese açık bir adreste çalışır. Bu yüzden **yalnızca `ALLOWED_EMAILS` listesindeki e-postalar giriş yapabilir**. Başkaları API kotasını harcayamaz.
+- **Giriş yöntemi:** e-posta + şifre (Supabase `signInWithPassword`). Kayıt ekranı yoktur; Supabase'de kayıt kapalıdır. Hesaplar ve şifreler `scripts/create-users.ts` ile (service role, şifre terminalde gizli girilir) oluşturulur; e-posta doğrulaması gerekmez.
+- **Yedek yöntem:** 6 haneli e-posta koduyla giriş (`signInWithOtp` + `verifyOtp`, `type: email`, yeni hesap açmaz). E-posta şablonunda `{{ .Token }}` gerektiği için kendi SMTP'n kurulana kadar kapalıdır (`EMAIL_CODE_LOGIN`).
+- **Oturum süresi:** Oturum çerezi 400 gün, yenileme anahtarının süresi yok; her istekte oturum yenilenir. Telefonda bir kez girmek yeter.
 - Bütün tablolarda RLS (Row Level Security) açık: `user_id = auth.uid()`.
 
 ---
@@ -450,6 +453,8 @@ Bütün tablolarda `user_id uuid references auth.users` ve RLS açık. Yalnızca
 | `GEMINI_MODELS` | yerel + Vercel | Virgülle ayrılmış model sırası. Önce Flash-Lite |
 | `AI_DAILY_LIMIT` | yerel + Vercel | Varsayılan 150 |
 | `ALLOWED_EMAILS` | yerel + Vercel | Giriş yapabilecek e-postalar |
+| `EMAIL_CODE_LOGIN` | yerel + Vercel | `true` ise 6 haneli e-posta koduyla giriş açılır (SMTP ve `{{ .Token }}` şablonu gerekir). Varsayılan kapalı |
+| `E2E_EMAIL`, `E2E_PASSWORD` | yalnızca yerel, isteğe bağlı | Playwright testleri için test kullanıcısı. `E2E_PASSWORD` boşsa giriş gerektiren testler atlanır |
 | `CRON_SECRET` | Vercel | Keepalive cron'unu korur |
 | `APP_TIMEZONE` | yerel + Vercel | `Europe/Istanbul` |
 | `DAY_START_HOUR` | yerel + Vercel | `4` |

@@ -17,7 +17,8 @@ npm run build      # üretim derlemesi
 npm run lint       # ESLint
 npm run typecheck  # tsc --noEmit
 npm test           # vitest run (birim testleri)
-npm run test:e2e   # Playwright (uçtan uca)
+npm run test:e2e   # Playwright (uçtan uca; masaüstü Chromium + iPhone Safari/WebKit; E2E_PASSWORD gerekir)
+npm run users      # hesap oluştur / şifre belirle (şifre terminalde gizli girilir)
 npm run db:types   # Supabase tiplerini yeniden üret (supabase login gerekir)
 npm run db:push    # migration'ları uzak veritabanına uygula (supabase link gerekir)
 npm run enrich -- --limit 50   # NGSL'yi Gemini ile zenginleştir → data/words.ngsl.json (kaldığı yerden devam eder)
@@ -36,7 +37,7 @@ Betikler `tsx --conditions=react-server` ile çalışır; böylece `server-only`
 - Şema yalnızca `supabase/migrations/` içindeki SQL dosyalarıyla değişir. Yeni migration dosya adı uzak veritabanındaki sürümle aynı olmalı (`supabase_migrations.schema_migrations`).
 - Tipler: `src/lib/supabase/database.types.ts` (üretilmiş, elle düzenlenmez).
 - Client'lar: `src/lib/supabase/client.ts` (tarayıcı), `server.ts` (sunucu), `proxy.ts` (oturum yenileme + giriş zorunluluğu, `src/proxy.ts` çağırır). Next.js 16'da middleware'in adı `proxy`.
-- Giriş: e-posta sihirli bağlantı → `/auth/callback`. `ALLOWED_EMAILS` kontrolü sunucuda üç yerde: giriş action'ı, callback, proxy.
+- Giriş: e-posta + şifre (`src/app/login/actions.ts`). Kayıt yok, Supabase'de kayıt kapalı; hesaplar `npm run users` ile oluşturulur. Yedek: 6 haneli e-posta kodu (`EMAIL_CODE_LOGIN=true` + SMTP gerekir). `ALLOWED_EMAILS` kontrolü sunucuda: giriş action'ları ve proxy. Tek açık sayfa `/login`.
 - Profil varsayılanları: `src/lib/settings.ts` (`DEFAULT_SETTINGS`).
 
 ## Klasör yapısı
@@ -85,7 +86,7 @@ Testler test ettikleri dosyanın yanında durur: `foo.ts` → `foo.test.ts`.
 
 ## Test kullanıcısı ve geliştirici araçları
 
-- Denemeler, ekran görüntülü kontroller ve veri yazan testler **yalnızca test kullanıcısıyla** yapılır: `ALLOWED_EMAILS` içindeki `+test` adresi (`npm run test-user` oluşturur). Gerçek kullanıcının verisine dokunulmaz; gerçek veri silinecekse önce kullanıcıya liste gösterilip onay alınır.
+- Denemeler, ekran görüntülü kontroller ve veri yazan testler **yalnızca test kullanıcısıyla** yapılır: `ALLOWED_EMAILS` içindeki `+test` adresi (`npm run users` ile şifresi belirlenir). Gerçek kullanıcının verisine dokunulmaz; gerçek veri silinecekse önce kullanıcıya liste gösterilip onay alınır.
 - Ben → "Geliştirici araçları" (yalnızca `next dev`): Bugünü sıfırla, Tarihi 1 gün ileri al, Gerçek tarihe dön. Tarih kaydırma `ef-dev-day-offset` çerezinde; uygulamanın "şimdi"si `requireUser().now` / `getNow()` (`src/lib/dev/clock.ts`) üzerinden alınır. Production'da panel çizilmez, action'lar 404 döner, çerez yok sayılır.
 
 ## Çalışma kuralları

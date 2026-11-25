@@ -5,7 +5,8 @@ import type { Database } from "./database.types";
 import { getSupabaseEnv } from "./env";
 
 // Giriş yapmadan açılabilen yollar.
-const PUBLIC_PATHS = ["/login", "/auth/callback", "/auth/confirm"];
+// Giriş yapmadan açılabilen tek sayfa: /login (şifre ya da e-posta koduyla giriş, kayıt yok).
+const PUBLIC_PATHS = ["/login"];
 
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));

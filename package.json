@@ -17,8 +17,8 @@
     "seed": "tsx --conditions=react-server scripts/seed-words.ts",
     "models": "tsx scripts/list-models.ts",
     "words:report": "tsx scripts/report-words.ts",
-    "test-user": "tsx scripts/create-test-user.ts",
-    "dev:lan": "next dev -H 0.0.0.0"
+    "dev:lan": "next dev -H 0.0.0.0",
+    "users": "tsx scripts/create-users.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.125",
