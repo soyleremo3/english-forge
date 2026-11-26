@@ -16,6 +16,8 @@ export async function completeTaskTemporary(formData: FormData): Promise<void> {
   const key = taskKeySchema.parse(formData.get("task"));
   // Yeni kelimeler artık gerçek ekranla (grup çalışması + sınav) tamamlanır.
   if (key === "new_words") redirect("/study/new");
+  if (key === "review") redirect("/study/review");
+  if (key === "daily_test") redirect("/study/daily-test");
   const { supabase, userId, now } = await requireUser();
   const before = await loadToday(supabase, userId, now);
 

@@ -5,6 +5,7 @@ import { tr } from "@/i18n/tr";
 import {
   CEFR_OPTIONS,
   QUIZ_DIRECTIONS,
+  REVIEW_BUTTON_MODES,
   SETTINGS_LIMITS,
   type Settings,
   type SettingsKey,
@@ -55,7 +56,10 @@ export function SettingsForm({ initial }: { initial: Settings }) {
     [F[key].hint ? `${key}-hint` : null, errors[key] ? `${key}-error` : null].filter(Boolean).join(" ") ||
     undefined;
 
-  const numberInput = (key: "daily_new" | "group_size" | "min_sentences" | "review_cap" | "desired_retention", step = 1) =>
+  const numberInput = (
+    key: "daily_new" | "group_size" | "min_sentences" | "review_cap" | "desired_retention" | "typed_review_every",
+    step = 1,
+  ) =>
     field(
       key,
       <input
@@ -172,6 +176,17 @@ export function SettingsForm({ initial }: { initial: Settings }) {
         <div className="grid gap-4 sm:grid-cols-2">
           {numberInput("desired_retention", 0.01)}
           {numberInput("review_cap")}
+          {field(
+            "review_buttons",
+            <select id="review_buttons" name="review_buttons" defaultValue={values.review_buttons} className={inputClass}>
+              {REVIEW_BUTTON_MODES.map((m) => (
+                <option key={m} value={m}>
+                  {tr.settings.reviewButtons[m]}
+                </option>
+              ))}
+            </select>,
+          )}
+          {numberInput("typed_review_every")}
         </div>,
       )}
 

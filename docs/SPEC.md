@@ -163,16 +163,21 @@ Hedef kullanıcı: Emrullah. Seviyesi B1'in biraz altı. Hedefi Nisan–Mayıs 2
   - Bugünün bütün yeni kelimeleri
   - Son 7 günde hata yapılan kelimelerden en fazla 8 tanesi
   - Sıra karışık, cevaplar yazılı, yön karışık.
-- Sonuç yüzde olarak kaydedilir. Yanlış yapılan kelimeler FSRS'te `Again` olarak işlenir.
+- Soru listesi testin ilk açılışında `study_days.tasks.daily_test.wordIds`'e sabitlenir; gün içinde değişmez. Bugünün kelimelerinden "zaten biliyorum" denenler sorulmaz.
+- Sonuç yüzde olarak kaydedilir (`study_days.daily_test_score`). Yanlış yapılan kelimeler FSRS'te `Again` olarak işlenir; doğrular FSRS'i değiştirmez. Kaydetmeden önce itiraz edilebilir.
+- XP: doğru cevap başına 3, tam puana +50.
 - Görevin tamamlanması için testi bitirmek yeter, puan şartı yoktur. Puan, haftalık ayarlamada kullanılır (5.9).
 
 ### 5.5 Tekrar (FSRS ile aralıklı tekrar)
 - Her gün vadesi gelen kartlar gösterilir.
 - Kart Türkçe yüzle başlar, çevrilince İngilizcesi görünür. Butonlar: **Bilemedim** = `Again`, **Bildim** = `Good`. Ayarlardan dörtlü düzene (Again / Hard / Good / Easy) geçilebilir.
-- Her 5 tekrar kartından biri yazılı sorulur, böylece aktif hatırlama yapılır. Ayarlardan değiştirilebilir.
+- Her 5 tekrar kartından biri yazılı sorulur, böylece aktif hatırlama yapılır. Ayarlardan değiştirilebilir (`typed_review_every`, 0 = kapalı). Yazılı soru TR→EN'dir; notu cevaptan hesaplanır (doğru/neredeyse = Good, yanlış = Again, itiraz edilebilir).
+- "Bilemedim" (Again) denen kartlar ana turdan sonra bir kez daha gösterilir ve "Bildim" denene kadar döngüde kalır. Bu ek turlar FSRS'i etkilemez: **FSRS'e yalnızca kartın o günkü ilk cevabı işlenir** (sunucu, aynı gün ikinci cevabı yok sayar).
+- Tekrar edilen kart aynı gün yeniden vadeye girmez (en erken ertesi gün 04:00).
+- Oturum bitince Tekrar görevi tamamlanır. Vadesi gelen kart yoksa görev kendiliğinden tamam sayılır.
 - Hedef hatırlama oranı (desired retention) 0,90. Ayarlardan değiştirilebilir.
 - "Bugünün tekrarları": vadesi bu çalışma günü bitmeden (ertesi gün 04:00'ten önce) gelen kartlar.
-- Günlük tekrar üst sınırı 150 (ayarlanabilir). Fazlası ertesi güne kayar ve uyarı gösterilir.
+- Günlük tekrar üst sınırı 150 (ayarlanabilir; o gün yapılan tekrarlar dahil). Fazlası ertesi güne kayar ve uyarı gösterilir.
 
 ### 5.6 Cevap kontrol kuralları
 1. **Normalizasyon:**
@@ -369,7 +374,7 @@ Bütün tablolarda `user_id uuid references auth.users` ve RLS açık. Yalnızca
 
 | Tablo | Önemli kolonlar |
 |---|---|
-| `profiles` | `user_id` (PK), `settings jsonb`: `daily_new` (8), `group_size` (8), `shuffle_rounds` (true), `quiz_direction` (mixed), `required_tasks`, `min_sentences` (3), `desired_retention` (0.9), `review_cap` (150), `tts_accent`, `ai_enabled`, `journal_ai`, `ielts_target_date`, `cefr`; `freezes_available`, `created_at` |
+| `profiles` | `user_id` (PK), `settings jsonb`: `daily_new` (8), `group_size` (8), `shuffle_rounds` (true), `quiz_direction` (mixed), `required_tasks`, `min_sentences` (3), `desired_retention` (0.9), `review_cap` (150), `review_buttons` (two/four, two), `typed_review_every` (5; 0 = kapalı), `tts_accent`, `ai_enabled`, `journal_ai`, `ielts_target_date`, `cefr`; `freezes_available`, `created_at` |
 | `words` | `id`, `lemma`, `pos`, `tr_meanings text[]`, `en_alternatives text[]`, `en_definition`, `example_en`, `example_tr`, `source` (ngsl/nawl/book/manual), `rank`, `cefr`, `is_function_word bool`, `created_by` (manual ise kullanıcı); `(source, lemma)` tekil |
 | `user_words` | `id`, `user_id`, `word_id`, `status` (new/learning/review/known/suspended), FSRS alanları (`due`, `stability`, `difficulty`, `elapsed_days`, `scheduled_days`, `reps`, `lapses`, `state`, `last_review`), `introduced_on date`, `custom_tr text[]`, `accepted_answers_en text[]` (TR→EN itirazları), `accepted_answers_tr text[]` (EN→TR itirazları), `notes` |
 | `review_logs` | `id`, `user_id`, `user_word_id`, `kind` (learn/review/group_quiz/daily_test/typed_review), `rating`, `direction`, `answer`, `result` (correct/almost/wrong), `ai_checked bool`, `created_at` |

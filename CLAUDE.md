@@ -19,6 +19,7 @@ npm run typecheck  # tsc --noEmit
 npm test           # vitest run (birim testleri)
 npm run test:e2e   # Playwright (uçtan uca; masaüstü Chromium + iPhone Safari/WebKit; E2E_PASSWORD gerekir)
 npm run users      # hesap oluştur / şifre belirle (şifre terminalde gizli girilir)
+npm run test:e2e:dev   # geliştirici araçlı e2e (günlük test + ertesi gün tekrar); çalışan `npm run dev` gerekir
 npm run db:types   # Supabase tiplerini yeniden üret (supabase login gerekir)
 npm run db:push    # migration'ları uzak veritabanına uygula (supabase link gerekir)
 npm run enrich -- --limit 50   # NGSL'yi Gemini ile zenginleştir → data/words.ngsl.json (kaldığı yerden devam eder)
@@ -57,6 +58,10 @@ src/lib/answer-check.ts   cevap kontrolü (SPEC 5.6, saf, testli)
 src/lib/fsrs.ts           ts-fsrs sarmalayıcısı; ilk tekrar her zaman ertesi gün (testli)
 src/lib/study/            grup çalışması durum makinesi, günün planı, sınav mantığı (saf, testli)
 src/lib/new-words.ts      günün planı, "zaten biliyorum", grup sınavı kaydı (server-only)
+src/lib/reviews.ts        tekrar kuyruğu, ilk cevap kuralı, oturum bitişi (server-only)
+src/lib/daily-test-server.ts  günlük test: sabit soru listesi, kayıt (server-only)
+src/lib/study/review-session.ts  tekrar durum makinesi: ana tur, "Bilemedim" ek turları (saf, testli)
+src/components/quiz/quiz-session.tsx  ORTAK yazılı sınav bileşeni (grup sınavı, mini sınav, günlük test)
 src/stores/               Zustand + persist (localStorage) çalışma oturumları
 src/components/study, quiz  kart, grup çalışması, sınav ekranları
 src/lib/prompts/          yapay zekâ sistem talimatları (Aşama 2)
@@ -86,12 +91,14 @@ Testler test ettikleri dosyanın yanında durur: `foo.ts` → `foo.test.ts`.
 
 ## Test kullanıcısı ve geliştirici araçları
 
-- Denemeler, ekran görüntülü kontroller ve veri yazan testler **yalnızca test kullanıcısıyla** yapılır: `ALLOWED_EMAILS` içindeki `+test` adresi (`npm run users` ile şifresi belirlenir). Gerçek kullanıcının verisine dokunulmaz; gerçek veri silinecekse önce kullanıcıya liste gösterilip onay alınır.
+- Otomatik testler ve Claude'un denemeleri **otomasyon hesabıyla** (`ALLOWED_EMAILS` içindeki `+e2e` adresi) yapılır: her çalıştırmada rastgele şifre alır, şifre yazdırılmaz, bitince veri temizlenir. Kullanıcının `+test` hesabının şifresine dokunulmaz.
+- Elle denemeler ve ekran görüntülü kontroller **yalnızca test kullanıcısıyla** yapılır: `ALLOWED_EMAILS` içindeki `+test` adresi (`npm run users` ile şifresi belirlenir). Gerçek kullanıcının verisine dokunulmaz; gerçek veri silinecekse önce kullanıcıya liste gösterilip onay alınır.
 - Ben → "Geliştirici araçları" (yalnızca `next dev`): Bugünü sıfırla, Tarihi 1 gün ileri al, Gerçek tarihe dön. Tarih kaydırma `ef-dev-day-offset` çerezinde; uygulamanın "şimdi"si `requireUser().now` / `getNow()` (`src/lib/dev/clock.ts`) üzerinden alınır. Production'da panel çizilmez, action'lar 404 döner, çerez yok sayılır.
 
 ## Çalışma kuralları
 
 - İş bitti demeden önce `npm run lint`, `npm run typecheck` ve `npm test` çalıştırılır; hepsi geçmeli.
+- Kayıt zamanları (`review_logs.created_at`, `quiz_attempts.created_at`) uygulamanın saatiyle (`now`) yazılır; böylece geliştirici aracıyla simüle edilen günde de "bugün" ve "son 7 gün" hesapları doğru çalışır.
 - Her görevin sonunda değişiklikler **sormadan commit edilip push edilir** (kullanıcının kalıcı isteği). Öncesinde `git status` ile `.env*` (yalnızca `.env.example` hariç) ve gizli anahtar olmadığı kontrol edilir. Kullanıcının dışarıda tutulmasını istediği dosyalar (ör. enrich çalışırken `data/words.ngsl.json`) eklenmez. Raporda commit hash'i yazılır.
 - Yönlendirmelerde `request.nextUrl.origin` yerine `requestOrigin()` (`src/lib/request-origin.ts`) kullanılır: `dev:lan` ile `0.0.0.0` üzerinde çalışırken doğru adrese dönülür.
 - SPEC'te olmayan bir karar gerekirse önce kullanıcıya sorulur, tahminle ilerlenmez.

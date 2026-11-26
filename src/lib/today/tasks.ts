@@ -19,10 +19,18 @@ export const newWordsProgressSchema = taskProgressSchema.extend({
 
 export type NewWordsProgress = z.infer<typeof newWordsProgressSchema>;
 
+/** Günlük test ayrıca gün içinde sabit kalan soru listesini ve puanı taşır (SPEC 5.4). */
+export const dailyTestProgressSchema = taskProgressSchema.extend({
+  wordIds: z.array(z.number().int().positive()).optional(),
+  score: z.number().min(0).max(100).optional(),
+});
+
+export type DailyTestProgress = z.infer<typeof dailyTestProgressSchema>;
+
 export const storedTasksSchema = z.object({
   review: taskProgressSchema.optional(),
   new_words: newWordsProgressSchema.optional(),
-  daily_test: taskProgressSchema.optional(),
+  daily_test: dailyTestProgressSchema.optional(),
   sentences: taskProgressSchema.optional(),
 });
 
@@ -83,8 +91,9 @@ export function buildTaskViews(tasks: StoredTasks, ctx: TaskContext): TaskView[]
 
   // Tekrar: kart yoksa kendiliğinden tamam. Hedef, kalan kartlar + bugün yapılanlar (üst sınırlı).
   const reviewTotal = Math.min(ctx.dueCount + review.count, ctx.settings.review_cap);
-  const reviewAuto = !review.done && ctx.dueCount === 0;
-  const reviewDone = review.done || reviewAuto;
+  // Kendiliğinden tamam: bugün hiç kart yoktu (çalışılıp bitirilen gün "Tamamlandı" görünür).
+  const reviewAuto = !review.done && ctx.dueCount === 0 && review.count === 0;
+  const reviewDone = review.done || ctx.dueCount === 0;
 
   // Günlük test yalnızca yeni kelimeler bitince açılır.
   const dailyLocked = !dailyTest.done && !newWords.done;

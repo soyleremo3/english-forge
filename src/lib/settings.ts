@@ -14,7 +14,10 @@ export const SETTINGS_LIMITS = {
   min_sentences: { min: 3, max: 8 },
   desired_retention: { min: 0.7, max: 0.99 },
   review_cap: { min: 10, max: 1000 },
+  typed_review_every: { min: 0, max: 20 },
 } as const;
+
+export const REVIEW_BUTTON_MODES = ["two", "four"] as const;
 
 const L = SETTINGS_LIMITS;
 
@@ -27,6 +30,10 @@ export const settingsSchema = z.object({
   min_sentences: z.number().int().min(L.min_sentences.min).max(L.min_sentences.max),
   desired_retention: z.number().min(L.desired_retention.min).max(L.desired_retention.max),
   review_cap: z.number().int().min(L.review_cap.min).max(L.review_cap.max),
+  /** Tekrar butonları: "two" = Bilemedim/Bildim, "four" = Again/Hard/Good/Easy (SPEC 5.5) */
+  review_buttons: z.enum(REVIEW_BUTTON_MODES),
+  /** Her kaç tekrar kartından biri yazılı sorulur; 0 = hiç (SPEC 5.5) */
+  typed_review_every: z.number().int().min(L.typed_review_every.min).max(L.typed_review_every.max),
   tts_accent: z.enum(TTS_ACCENTS),
   ai_enabled: z.boolean(),
   journal_ai: z.boolean(),
@@ -46,6 +53,8 @@ export const DEFAULT_SETTINGS: Settings = {
   min_sentences: 3,
   desired_retention: 0.9,
   review_cap: 150,
+  review_buttons: "two",
+  typed_review_every: 5,
   tts_accent: "en-US",
   ai_enabled: false,
   journal_ai: true,
@@ -77,6 +86,8 @@ export const settingsFormSchema = z.object({
   min_sentences: z.coerce.number(),
   desired_retention: z.coerce.number(),
   review_cap: z.coerce.number(),
+  review_buttons: z.string(),
+  typed_review_every: z.coerce.number(),
   tts_accent: z.string(),
   ai_enabled: z.boolean(),
   journal_ai: z.boolean(),
@@ -99,6 +110,8 @@ export function parseSettingsForm(
     min_sentences: text("min_sentences"),
     desired_retention: text("desired_retention"),
     review_cap: text("review_cap"),
+    review_buttons: text("review_buttons"),
+    typed_review_every: text("typed_review_every"),
     tts_accent: text("tts_accent"),
     ai_enabled: formData.get("ai_enabled") === "on",
     journal_ai: formData.get("journal_ai") === "on",

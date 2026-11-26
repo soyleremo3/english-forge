@@ -288,6 +288,8 @@ export async function submitGroupQuiz(
 
     const { error: logError } = await supabase.from("review_logs").insert({
       user_id: userId,
+      // Uygulamanın saati (geliştirmede simüle edilen gün dahil); "bugün" ve "son 7 gün" hesapları buna dayanır.
+      created_at: now.toISOString(),
       user_word_id: word.userWordId,
       kind: "group_quiz",
       rating: passed ? RATING.good : RATING.again,
@@ -301,6 +303,7 @@ export async function submitGroupQuiz(
   const score = scoreQuiz(answers);
   const { error: quizError } = await supabase.from("quiz_attempts").insert({
     user_id: userId,
+    created_at: now.toISOString(),
     kind: "group",
     study_date: ctx.date,
     score: score.percent,

@@ -13,6 +13,8 @@ type Props = {
   /** Bu sorunun cevabı verilmişse geri bildirim gösterilir */
   answer: QuizAnswer | undefined;
   allowAppeal: boolean;
+  /** "Soru 1/1" sayacını gizle (tekrardaki tek yazılı soru) */
+  hideCounter?: boolean;
   onSubmit: (text: string) => void;
   onAppeal: () => void;
   onNext: () => void;
@@ -25,7 +27,7 @@ const RESULT_STYLE = {
 } as const;
 
 // Tek soru: yazılı cevap → anında geri bildirim (doğru / neredeyse / yanlış, yanlışsa doğrusu) → Enter ile sonraki.
-export function QuizRunner({ items, words, index, answer, allowAppeal, onSubmit, onAppeal, onNext }: Props) {
+export function QuizRunner({ items, words, index, answer, allowAppeal, hideCounter, onSubmit, onAppeal, onNext }: Props) {
   const item = items[index];
   const word = item ? words.get(item.wordId) : undefined;
   const [text, setText] = useState("");
@@ -39,7 +41,7 @@ export function QuizRunner({ items, words, index, answer, allowAppeal, onSubmit,
 
   return (
     <section className="space-y-4">
-      <p className="text-sm text-muted tabular-nums">{tr.quiz.question(index + 1, items.length)}</p>
+      {!hideCounter && <p className="text-sm text-muted tabular-nums">{tr.quiz.question(index + 1, items.length)}</p>}
 
       <div className="rounded-3xl border border-border bg-surface p-6 text-center">
         <p className="text-xs font-medium tracking-wide text-muted uppercase">

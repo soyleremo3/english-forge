@@ -14,6 +14,7 @@ describe("isTestEmail", () => {
   it("+test ekli adresi test kullanıcısı sayar", () => {
     expect(isTestEmail("ad+test@gmail.com")).toBe(true);
     expect(isTestEmail(" Ad+TEST@gmail.com ")).toBe(true);
+    expect(isTestEmail("ad+e2e@gmail.com")).toBe(true);
   });
 
   it("gerçek ve diğer + ekli adresleri test saymaz", () => {

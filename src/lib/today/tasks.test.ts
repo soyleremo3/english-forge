@@ -35,6 +35,11 @@ describe("buildTaskViews", () => {
     expect(review).toMatchObject({ status: "done", auto: true });
   });
 
+  it("kartlar çalışılıp bitince 'kart yok' değil 'tamamlandı' görünür", () => {
+    const review = buildTaskViews({ review: { done: false, count: 12 } }, ctx(0)).find((v) => v.key === "review");
+    expect(review).toMatchObject({ status: "done", auto: false, count: 12, total: 12 });
+  });
+
   it("tekrar hedefi review_cap ile sınırlanır", () => {
     const review = buildTaskViews({}, ctx(400)).find((v) => v.key === "review");
     expect(review?.total).toBe(150);

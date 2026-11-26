@@ -15,6 +15,9 @@ loadLocalEnv();
 
 const PORT = 3100;
 const HOST = process.env.E2E_HOST || "localhost";
+// Çalışan bir sunucuya bağlanmak için (ör. geliştirici araçlarını gerektiren testler, `npm run dev`):
+//   E2E_BASE_URL=http://localhost:3000 E2E_DEV=1
+const EXISTING = process.env.E2E_BASE_URL;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -23,17 +26,19 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"]],
   use: {
-    baseURL: `http://${HOST}:${PORT}`,
+    baseURL: EXISTING ?? `http://${HOST}:${PORT}`,
     trace: "retain-on-failure",
   },
   projects: [
     { name: "masaüstü-chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "iphone-safari", use: { ...devices["iPhone 14"] } },
   ],
-  webServer: {
-    command: `npx next build && npx next start -p ${PORT}`,
-    url: `http://${HOST}:${PORT}/login`,
-    timeout: 300_000,
-    reuseExistingServer: false,
-  },
+  webServer: EXISTING
+    ? undefined
+    : {
+        command: `npx next build && npx next start -p ${PORT}`,
+        url: `http://${HOST}:${PORT}/login`,
+        timeout: 300_000,
+        reuseExistingServer: false,
+      },
 });

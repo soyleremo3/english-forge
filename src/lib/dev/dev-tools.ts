@@ -11,9 +11,9 @@ export function isDevToolsEnabled(env: Record<string, string | undefined> = proc
   return env.NODE_ENV === "development";
 }
 
-/** Test kullanıcısı mı? Kural: e-postanın yerel kısmı "+test" ile biter (ad+test@alan). */
+/** Test kullanıcısı mı? Kural: e-postanın yerel kısmı "+test" ya da otomasyon için "+e2e" ile biter. */
 export function isTestEmail(email: string | null | undefined): boolean {
-  return typeof email === "string" && /\+test@/i.test(email.trim());
+  return typeof email === "string" && /\+(test|e2e)@/i.test(email.trim());
 }
 
 /** Çerez değerini güvenle gün sayısına çevirir (0–3650, geçersizse 0). */

@@ -137,6 +137,31 @@ export async function loadToday(supabase: Db, userId: string, now: Date = new Da
 }
 
 /**
+ * Günün görevlerini (ve isteğe bağlı XP'sini) günceller: kaydı okur, `mutate` ile değiştirir, yazar.
+ * Ek kolonlar (ör. daily_test_score) `extra` ile verilir. Günün tamamlanması çağıranın loadToday'iyle olur.
+ */
+export async function updateDayTasks(
+  supabase: Db,
+  userId: string,
+  date: IsoDate,
+  mutate: (tasks: StoredTasks) => StoredTasks,
+  options: { xpDelta?: number; extra?: { daily_test_score?: number } } = {},
+): Promise<void> {
+  const day = await ensureStudyDay(supabase, userId, date);
+  const tasks = mutate(parseTasks(day.tasks));
+  const { error } = await supabase
+    .from("study_days")
+    .update({
+      tasks: tasks as unknown as Json,
+      ...(options.xpDelta ? { xp: day.xp + options.xpDelta } : {}),
+      ...(options.extra ?? {}),
+    })
+    .eq("user_id", userId)
+    .eq("study_date", date);
+  if (error) fail("Gün kaydı güncellenemedi", error.message);
+}
+
+/**
  * Bir günün study_days kaydını siler (görev durumu, o günün XP'si ve seriye katkısı gider).
  * FSRS kartlarına (user_words), tekrar kayıtlarına ve cümlelere dokunmaz.
  */

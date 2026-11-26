@@ -103,13 +103,25 @@ export function firstReview(now: Date, grade: ReviewGrade, options: FsrsOptions)
   return { ...toFields(card), due: tomorrow.toISOString(), scheduled_days: 1 };
 }
 
-/** Sonraki tekrarlar: FSRS'in hesapladığı aralık olduğu gibi kullanılır. */
+/**
+ * Sonraki tekrarlar: FSRS'in hesapladığı aralık kullanılır. Tek kural: kart aynı çalışma gününde
+ * yeniden vadeye girmez (en erken ertesi gün 04:00), böylece bugünün listesi gün içinde büyümez.
+ */
 export function nextReview(
   fields: CardFields,
   now: Date,
   grade: ReviewGrade,
   options: FsrsOptions,
 ): CardFields {
+  const tc = options.timeConfig ?? getTimeConfig();
   const { card } = scheduler(options).next(fromFields(fields), now, GRADES[grade]);
-  return toFields(card);
+  const result = toFields(card);
+  const tomorrow = startOfStudyDay(addDays(getStudyDate(now, tc), 1), tc);
+  return new Date(result.due) < tomorrow ? { ...result, due: tomorrow.toISOString() } : result;
+}
+
+/** Kartın bu çalışma gününde zaten değerlendirilip değerlendirilmediği (ilk cevap kuralı). */
+export function reviewedToday(lastReview: string | null, now: Date, timeConfig: TimeConfig = getTimeConfig()): boolean {
+  if (!lastReview) return false;
+  return getStudyDate(new Date(lastReview), timeConfig) === getStudyDate(now, timeConfig);
 }

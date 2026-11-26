@@ -18,7 +18,8 @@
     "models": "tsx scripts/list-models.ts",
     "words:report": "tsx scripts/report-words.ts",
     "dev:lan": "next dev -H 0.0.0.0",
-    "users": "tsx scripts/create-users.ts"
+    "users": "tsx scripts/create-users.ts",
+    "test:e2e:dev": "tsx --conditions=react-server scripts/e2e-dev.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.125",

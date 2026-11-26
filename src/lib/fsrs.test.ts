@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { firstReview, nextReview } from "./fsrs";
+import { firstReview, nextReview, reviewedToday } from "./fsrs";
 import type { TimeConfig } from "./time";
 
 const tc: TimeConfig = { timeZone: "Europe/Istanbul", dayStartHour: 4 };
@@ -46,6 +46,21 @@ describe("nextReview", () => {
     expect(days).toBeGreaterThan(1);
     expect(second.scheduled_days).toBeGreaterThan(1);
     expect(second.reps).toBe(2);
+  });
+
+  it("Again bile kartı aynı gün yeniden vadeye sokmaz (en erken ertesi gün 04:00)", () => {
+    const first = firstReview(at("2026-11-25T15:00:00"), "good", opts);
+    const secondAt = at("2026-11-26T10:00:00");
+    const again = nextReview(first, secondAt, "again", opts);
+    expect(new Date(again.due).getTime()).toBeGreaterThanOrEqual(new Date("2026-11-27T01:00:00.000Z").getTime());
+  });
+
+  it("reviewedToday: çalışma gününe göre (04:00 sınırı)", () => {
+    expect(reviewedToday("2026-11-26T07:00:00.000Z", at("2026-11-26T22:00:00"), tc)).toBe(true);
+    // 25 Kasım 23:00'teki tekrar, 26 Kasım 02:00'de hâlâ aynı gün
+    expect(reviewedToday(at("2026-11-25T23:00:00").toISOString(), at("2026-11-26T02:00:00"), tc)).toBe(true);
+    expect(reviewedToday(at("2026-11-25T23:00:00").toISOString(), at("2026-11-26T05:00:00"), tc)).toBe(false);
+    expect(reviewedToday(null, at("2026-11-26T05:00:00"), tc)).toBe(false);
   });
 
   it("ikinci tekrarda Again, Good'dan kısa aralık verir ve hata sayısını artırır", () => {

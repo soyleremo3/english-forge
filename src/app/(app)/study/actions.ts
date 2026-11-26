@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/current-user";
+import { type DailyTestResult, submitDailyTest } from "@/lib/daily-test-server";
+import { finishReviewSession, type ReviewAnswerResult, submitReviewAnswer } from "@/lib/reviews";
 import {
   type GroupQuizResult,
   markWordKnown,
@@ -37,6 +39,69 @@ const submitSchema = z.object({
     .min(1)
     .max(50),
 });
+
+const gradeSchema = z.enum(["again", "hard", "good", "easy"]);
+
+const reviewAnswerSchema = z.object({
+  wordId: z.number().int().positive(),
+  grade: gradeSchema,
+  typed: z.object({ answer: z.string().max(500), appealed: z.boolean() }).optional(),
+});
+
+export type ReviewAnswerActionResult = { ok: true; result: ReviewAnswerResult } | { ok: false };
+
+/** Tekrar: kartın o günkü ilk cevabını FSRS'e işler (sunucu, aynı gün ikinci cevabı yok sayar). */
+export async function reviewAnswerAction(input: z.infer<typeof reviewAnswerSchema>): Promise<ReviewAnswerActionResult> {
+  const parsed = reviewAnswerSchema.safeParse(input);
+  if (!parsed.success) return { ok: false };
+  const { supabase, userId, now } = await requireUser();
+  try {
+    return { ok: true, result: await submitReviewAnswer(supabase, userId, now, parsed.data) };
+  } catch {
+    return { ok: false };
+  }
+}
+
+/** Tekrar oturumu bitti: görev tamamlanır. */
+export async function finishReviewAction(): Promise<{ ok: boolean }> {
+  const { supabase, userId, now } = await requireUser();
+  try {
+    await finishReviewSession(supabase, userId, now);
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+const dailySchema = z.object({ answers: submitSchemaAnswers() });
+
+function submitSchemaAnswers() {
+  return z
+    .array(
+      z.object({
+        wordId: z.number().int().positive(),
+        direction: z.enum(["tr_en", "en_tr"]),
+        answer: z.string().max(500),
+        appealed: z.boolean(),
+      }),
+    )
+    .min(1)
+    .max(100);
+}
+
+export type SubmitDailyResult = { ok: true; result: DailyTestResult } | { ok: false };
+
+/** Günlük testi kaydeder: puan, yanlışlar FSRS'te Again, XP, görev. */
+export async function submitDailyTestAction(input: z.infer<typeof dailySchema>): Promise<SubmitDailyResult> {
+  const parsed = dailySchema.safeParse(input);
+  if (!parsed.success) return { ok: false };
+  const { supabase, userId, now } = await requireUser();
+  try {
+    return { ok: true, result: await submitDailyTest(supabase, userId, now, parsed.data.answers) };
+  } catch {
+    return { ok: false };
+  }
+}
 
 export type SubmitQuizInput = z.infer<typeof submitSchema>;
 export type SubmitQuizResult = { ok: true; result: GroupQuizResult } | { ok: false };
